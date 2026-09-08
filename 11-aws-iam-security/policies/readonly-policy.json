@@ -1,0 +1,39 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadOnlyAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "rds:Describe*",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:ListMetrics",
+        "logs:FilterLogEvents",
+        "iam:GetPolicy",
+        "iam:ListPolicies"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyAllWrite",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:Create*",
+        "ec2:Delete*",
+        "ec2:Modify*",
+        "rds:Create*",
+        "rds:Delete*",
+        "s3:DeleteObject",
+        "s3:PutObject",
+        "iam:Create*",
+        "iam:Delete*",
+        "iam:Attach*",
+        "iam:Detach*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

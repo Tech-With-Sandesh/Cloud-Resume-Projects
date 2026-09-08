@@ -1,0 +1,52 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: "ap-south-1"
+  parameter-store:
+    DOCKER_HUB_USERNAME: "/codepipeline/docker-hub-username"
+    DOCKER_HUB_PASSWORD: "/codepipeline/docker-hub-password"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - echo "=== Installing dependencies ==="
+      - pip install --upgrade pip
+      - pip install -r requirements.txt
+
+  pre_build:
+    commands:
+      - echo "=== Running tests ==="
+      - python -m pytest tests/ -v --tb=short
+      - echo "=== Logging into ECR ==="
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - ECR_URI="$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME"
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-8)
+      - echo "Image tag = $IMAGE_TAG"
+
+  build:
+    commands:
+      - echo "=== Building Docker image ==="
+      - docker build -t $ECR_URI:$IMAGE_TAG .
+      - docker tag $ECR_URI:$IMAGE_TAG $ECR_URI:latest
+      - echo "=== Pushing to ECR ==="
+      - docker push $ECR_URI:$IMAGE_TAG
+      - docker push $ECR_URI:latest
+
+  post_build:
+    commands:
+      - echo "=== Writing imagedefinitions.json ==="
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$ECR_URI:$IMAGE_TAG" > imagedefinitions.json
+      - cat imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
+  discard-paths: yes
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'

@@ -1,0 +1,9 @@
+variable "location" { type = string; default = "eastus" }
+variable "resource_group_name" { type = string; default = "aks-rg" }
+variable "project_name" { type = string; default = "cloud-aks" }
+variable "environment" { type = string; default = "prod" }
+variable "kubernetes_version" { type = string; default = "1.29" }
+variable "node_vm_size" { type = string; default = "Standard_D2s_v3" }
+variable "node_count" { type = number; default = 2 }
+variable "node_min_count" { type = number; default = 1 }
+variable "node_max_count" { type = number; default = 5 }
